@@ -1,76 +1,73 @@
 {
-  "generatedAt": "2026-10-05T23:25:05.773Z",
+  "generatedAt": "2026-11-21T05:17:50.923Z",
   "model": "openai/gpt-5-mini",
-  "metricsFetchedAt": "2026-10-04T23:13:16.255Z",
-  "costUsd": 0.004181,
+  "metricsFetchedAt": "2026-11-21T04:57:27.878Z",
+  "costUsd": 0.001534,
   "bullets": [
     {
-      "text": "Merged PRs took a median 7.3 days from ready for review to merge; the slowest 10% took over 64 days.",
+      "text": "Merged PRs took a median 5.0 days from ready for review to merge; 1 in 10 took about 52 days or longer.",
       "prs": [
-        121910,
-        129129,
-        134037,
-        133940,
-        135486
+        113883
       ]
     },
     {
-      "text": "For merged PRs, reaching a reviewer lgtm took a median 4.1 days and 1 in 10 took about 49 days or longer; once both review labels were set the median merge time was 1.7 hours.",
+      "text": "295 open PRs have had no human response yet, with a median wait of 37 days.",
       "prs": [
-        121910,
-        129129,
-        133940,
-        135486,
-        135870
+        137152
       ]
     },
     {
-      "text": "Across the repo, 272 open PRs remain without any human response and have a median wait of 41 days in that queue.",
+      "text": "303 open PRs are waiting for a reviewer's lgtm, with a median wait of 62 days.",
       "prs": [
-        135011,
-        133906,
-        136632,
-        137152,
-        137551
+        105209
       ]
     },
     {
-      "text": "There are 368 open PRs waiting for a reviewer\u2019s lgtm with a median wait of 69 days, and 231 of those 368 (63%) are labeled for sig/api-machinery or sig/node.",
+      "text": "sig/api-machinery has 104 PRs waiting for a reviewer's lgtm, with a median wait of 66 days.",
       "prs": [
-        118378,
-        128866,
-        129087,
-        129854,
-        133589
+        118378
       ]
     },
     {
-      "text": "By team queue, sig/api-machinery has 120 PRs waiting for a reviewer\u2019s lgtm with a median wait of 85 days, making it the largest by total waiting in that stage.",
+      "text": "More open PRs are waiting on their author (383, median wait 23 days) than for a reviewer's lgtm (303).",
       "prs": [
-        118378,
-        128866,
-        129087,
-        133665,
-        135287
+        105229
       ]
     }
   ],
   "review": {
-    "reviewedAt": "2026-10-05",
-    "verdict": "All bullets true",
+    "reviewedAt": "2026-11-21",
+    "verdict": "Approved with edits: 2 corrected, 3 reworded",
     "edits": [
       {
         "bullet": 1,
-        "before": "Merged PRs spent a median 7.3 days in the stage from ready for review to merged, while the slowest 10% took over 64 days.",
-        "after": "Merged PRs took a median 7.3 days from ready for review to merge; the slowest 10% took over 64 days.",
-        "reason": "Tightened wording; same facts and citations."
+        "before": "Most merged work progresses from review-ready to merged in a median 5.0 days, although 1 in 10 merged PRs took about 52 days or longer; this reflects the time in review and merge stages for merged PRs.",
+        "after": "Merged PRs took a median 5.0 days from ready for review to merge; 1 in 10 took about 52 days or longer.",
+        "reason": "Correction: 'most merged work' overstated a median, which describes half. Same facts and citations."
       },
       {
         "bullet": 2,
-        "before": "For merged PRs, reaching a reviewer lgtm took a median 4.1 days and the slowest 10% took over 49 days; once both review labels were set the median merge time was 1.7 hours.",
-        "after": "For merged PRs, reaching a reviewer lgtm took a median 4.1 days and 1 in 10 took about 49 days or longer; once both review labels were set the median merge time was 1.7 hours.",
-        "date": "2026-10-06",
-        "reason": "Correction: the p90 is 48.7 days, so 'over 49 days' overstated it. Same facts and citations."
+        "before": "A large review queue has 295 open PRs with no human response yet, with a median wait of 37 days, indicating many PRs are stuck at the initial triage or response stage.",
+        "after": "295 open PRs have had no human response yet, with a median wait of 37 days.",
+        "reason": "Correction: these PRs aren't in a review queue yet, and the data doesn't show they're stuck at triage. Same facts and citations."
+      },
+      {
+        "bullet": 3,
+        "before": "There are 303 open PRs waiting for a reviewer’s lgtm across the repo, with a median wait of 62 days, showing a prolonged reviewer queue for those changes.",
+        "after": "303 open PRs are waiting for a reviewer's lgtm, with a median wait of 62 days.",
+        "reason": "Tightened wording; same facts and citations."
+      },
+      {
+        "bullet": 4,
+        "before": "The sig/api-machinery team is a major contributor to the reviewer queue with 104 PRs waiting for a reviewer’s lgtm and a median wait of 66 days, reflecting team-level backlog in that review stage.",
+        "after": "sig/api-machinery has 104 PRs waiting for a reviewer's lgtm, with a median wait of 66 days.",
+        "reason": "Tightened wording; same facts and citations."
+      },
+      {
+        "bullet": 5,
+        "before": "More PRs are waiting on their author than waiting for a reviewer’s lgtm: 383 open PRs are waiting on authors with a median wait of 23 days, compared with 303 waiting for reviewer lgtm; this highlights author-side queues versus reviewer-side queues.",
+        "after": "More open PRs are waiting on their author (383, median wait 23 days) than for a reviewer's lgtm (303).",
+        "reason": "Tightened wording, dropping a vague closing clause; same facts and citations."
       }
     ]
   }

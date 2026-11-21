@@ -1,7 +1,7 @@
 // Minimal static server for previewing site/ locally. Not used in production.
 import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
-import { extname, join, normalize } from 'node:path';
+import { extname, join, posix } from 'node:path';
 
 const ROOT = 'site';
 const PORT = Number(process.env.PORT) || 8080;
@@ -14,7 +14,9 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.json': 'application/json'
 createServer(async (req, res) => {
   try {
     // Inside the try: a malformed escape like %E0%A4%A makes decodeURIComponent throw.
-    const path = normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname)).replace(/^(\.\.[/\\])+/, '');
+    // URL paths use / on every OS: Windows' own normalize turned / into \ and lost the
+    // index.html fallback. Backslashes (a decoded %5C) become / first, so ..\ can't climb out.
+    const path = posix.normalize(decodeURIComponent(new URL(req.url, 'http://x').pathname).replace(/\\/g, '/')).replace(/^(\.\.\/)+/, '');
     const file = join(ROOT, path.endsWith('/') ? `${path}index.html` : path);
     const body = await readFile(file);
     res.writeHead(200, { ...HEADERS, 'Content-Type': TYPES[extname(file)] ?? 'application/octet-stream' });

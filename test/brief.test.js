@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { validateBrief, parseBrief, estimateCost, cleanBullets, humanDays, buildComparisons, MAX_OUTPUT_TOKENS } from '../src/brief.js';
+import { validateBrief, parseBrief, estimateCost, cleanBullets, humanDays, buildComparisons, buildInput, MAX_OUTPUT_TOKENS } from '../src/brief.js';
+import { readFileSync } from 'node:fs';
 
 const allowed = [[101, 102, 105], [103, 104]];
 const bullet = (prs, text = 'sig/node reviewer queue: 120 PRs waiting a median 75 days.') => ({ text, prs });
@@ -93,4 +94,29 @@ test('internal field names in the text are rejected', () => {
   const r = validateBrief(four(bullet([101], 'sig/node has 112 PRs with a medianWait of 41 days.')), allowed);
   assert.deepEqual(r.errors, ['bullet 1 uses the field name "medianWait"; write it in plain words']);
   assert.equal(validateBrief(four(bullet([101], 'sig/api-machinery waits 85 days for lgtm.')), allowed).ok, true);
+});
+
+test('two counts are called close only within 20% of each other', async () => {
+  const { compareCounts } = await import('../src/compare.js');
+  assert.equal(compareCounts(337, 368).than, 'close to');      // 2026-10-04: 0.92
+  assert.equal(compareCounts(383, 303).than, 'more than');     // 2026-11-21: 1.26
+  assert.equal(compareCounts(250, 303).than, 'close to');      // 0.83
+  assert.equal(compareCounts(200, 303).than, 'fewer than');    // 0.66
+  assert.equal(compareCounts(125, 100).common, 'about as common as');
+  assert.equal(compareCounts(126, 100).common, 'more common than');
+});
+
+test('the author-versus-reviewer fact never says "close to" when the counts are far apart', () => {
+  const live = JSON.parse(readFileSync('site/data/metrics.json', 'utf8'));
+  const b = live.overall.backlog;
+  const fact = buildInput(live).facts.find((f) => /waiting on their author, /.test(f.fact)).fact;
+  const ratio = b.author.count / b.reviewer.count;
+  assert.equal(/close to/.test(fact), ratio >= 0.8 && ratio <= 1.25, fact);
+});
+
+test('comparing zero counts gives a true answer', async () => {
+  const { compareCounts } = await import('../src/compare.js');
+  assert.equal(compareCounts(0, 0).than, 'close to');
+  assert.equal(compareCounts(5, 0).than, 'more than');
+  assert.equal(compareCounts(0, 5).than, 'fewer than');
 });

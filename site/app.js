@@ -42,6 +42,20 @@ const shortDate = (iso) => new Date(iso).toLocaleDateString('en-GB', { day: 'num
 const sigName = (g) => (g === 'cross-cutting' ? 'Cross-cutting (4+ SIGs)' : g === 'no-sig' ? 'No SIG label' : `sig/${g}`);
 const pct = (part, whole) => Math.round((part / whole) * 100);
 
+// ---- snapshot age (ADR 0011) ----
+// Calendar days (UTC, like the date beside it) since the snapshot was fetched, or
+// null when there's no clock: the prerendered copy in index.html is drawn once, so
+// it states only the date.
+const STALE_DAYS = 30;
+function snapshotAge(fetchedAt) {
+  const now = typeof NOW_MS === 'undefined' ? Date.now() : NOW_MS;
+  if (now === null) return null;
+  const day = (ms) => Math.floor(ms / 86_400_000); // whole UTC days since 1970
+  const days = day(now) - day(Date.parse(fetchedAt));
+  return Number.isFinite(days) && days >= 0 ? days : null;
+}
+const ago = (d) => (d === 0 ? 'today' : d === 1 ? '1 day ago' : `${num(d)} days ago`);
+
 // ---- DOM helper: text always goes in as text, never as HTML ----
 function el(tag, attrs = {}, ...children) {
   const node = document.createElement(tag);
@@ -266,6 +280,7 @@ const howMeasured = (summary, ...body) => el('details', { class: 'how' }, el('su
 function opening(m, f) {
   const o = m.overall;
   const share = reviewShare(m);
+  const age = snapshotAge(m.fetchedAt);
   const container = el('div', { class: 'opening' });
   const anchor = () => container;
 
@@ -301,9 +316,11 @@ function opening(m, f) {
     el('div', {},
       el('h1', {}, headline(o)),
       el('p', { class: 'byline' },
-        'By Gurnek Khaira · Snapshot of ', longDate(m.fetchedAt), ' · ',
+        'By Gurnek Khaira · Snapshot of ', longDate(m.fetchedAt), age === null ? '' : ` (${ago(age)})`, ' · ',
         `${num(o.merged.n)} merged and ${num(o.backlog.n)} open pull requests in `,
         el('a', { href: 'https://github.com/kubernetes/kubernetes', target: '_blank', rel: 'noopener' }, m.repo)),
+      age !== null && age >= STALE_DAYS && el('p', { class: 'stale-note' },
+        `This snapshot is ${num(age)} days old. Open PRs may have moved since, so read the waits and queues as they stood on ${longDate(m.fetchedAt)}.`),
       el('p', { class: 'summary' }, tailSentence(o).trim()),
       el('p', { class: 'plain' },
         'Software teams make changes through “pull requests” (PRs), proposals that a colleague must review and approve before they go in. ',
@@ -531,10 +548,28 @@ function figureTeams(m) {
   return fig;
 }
 
-function briefSection(brief) {
+/** True only for a brief the page can draw in full: a damaged file shows no brief, never half of one. */
+function wellFormedBrief(brief) {
+  const isDate = (v) => typeof v === 'string' && !Number.isNaN(Date.parse(v));
+  return !!brief && typeof brief === 'object' && !Array.isArray(brief) &&
+    typeof brief.model === 'string' && isDate(brief.generatedAt) &&
+    Array.isArray(brief.bullets) && brief.bullets.length > 0 &&
+    brief.bullets.every((b) => b && typeof b.text === 'string' && b.text.trim() !== '' &&
+      Array.isArray(b.prs) && b.prs.length > 0 && b.prs.every((n) => Number.isInteger(n) && n > 0)) &&
+    (brief.review == null || (typeof brief.review === 'object' && isDate(brief.review.reviewedAt) &&
+      (brief.review.edits == null || Array.isArray(brief.review.edits))));
+}
+
+function briefSection(brief, m) {
   const section = el('section', { class: 'part', id: 'brief', 'aria-labelledby': 'brief-h' }, el('h2', { id: 'brief-h' }, 'Risks brief'));
-  if (!brief || !Array.isArray(brief.bullets) || brief.bullets.length === 0) {
+  if (!wellFormedBrief(brief)) {
     section.append(el('p', { class: 'lede' }, 'No brief for this snapshot. The numbers in this report are unaffected.'));
+    return section;
+  }
+  // A brief cites the PRs and numbers of the snapshot it was written from, so
+  // one written for another snapshot is never shown beside this one's numbers.
+  if (brief.metricsFetchedAt !== m.fetchedAt) {
+    section.append(el('p', { class: 'lede' }, 'No brief for this snapshot yet: the last one was written for a different snapshot, so it isn’t shown. The numbers in this report are unaffected.'));
     return section;
   }
   const allEdits = brief.review?.edits ?? [];
@@ -661,13 +696,15 @@ async function load(path) {
   let m;
   try {
     m = await load('data/metrics.json');
+    // The date is what makes a snapshot honest: without one, show nothing rather than undated numbers.
+    if (typeof m?.fetchedAt !== 'string' || Number.isNaN(Date.parse(m.fetchedAt))) throw new Error('snapshot has no date');
   } catch {
     main.replaceChildren(el('p', { class: 'load-error' }, 'The snapshot data couldn’t load. Serve the site folder over HTTP (npm run serve); opening index.html directly won’t work.'));
     return;
   }
   const brief = await load('data/brief.json').catch(() => null);
   const f = findings(m);
-  main.replaceChildren(opening(m, f), backlogSection(m, f), queuesSection(m, f), teamsSection(m, f), briefSection(brief), methodSection(m));
+  main.replaceChildren(opening(m, f), backlogSection(m, f), queuesSection(m, f), teamsSection(m, f), briefSection(brief, m), methodSection(m));
   colophon(m);
   // Sections are drawn after load, so the browser's own jump to #backlog found nothing. Do it now.
   const target = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));

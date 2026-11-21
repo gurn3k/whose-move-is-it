@@ -86,8 +86,10 @@ class Element extends Node {
 /**
  * Run site/app.js against the given data and resolve once the report is drawn.
  * `metrics` or `brief` set to null makes that file fail to load.
+ * `now` (ms) sets the page's clock; null, the default, draws it as the
+ * prerendered copy does, with no snapshot age.
  */
-export async function renderSite({ metrics, brief }) {
+export async function renderSite({ metrics, brief, now = null }) {
   const body = new Element('body');
   for (const [tag, id] of [['button', 'theme-btn'], ['a', 'repo-link'], ['main', 'report'], ['footer', 'colophon']]) {
     const e = new Element(tag);
@@ -108,6 +110,7 @@ export async function renderSite({ metrics, brief }) {
     document,
     Node,
     console,
+    NOW_MS: now,
     location: { hash: '' },
     matchMedia: () => ({ matches: false }),
     localStorage: { getItem: () => null, setItem: () => {} },

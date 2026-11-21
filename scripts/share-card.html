@@ -1,8 +1,8 @@
 <!doctype html>
 <!--
   Source for site/share.png, the 1200×630 link-preview image.
-  Numbers are from the snapshot of 2026-10-04 (site/data/metrics.json); update
-  them after a refresh. Bar widths are value / review p90 (48.72 d) × 304px,
+  Numbers are from the snapshot of 2026-11-21 (site/data/metrics.json); update
+  them after a refresh. Bar widths are value / review p90 (41.88 d) × 304px,
   with a 1% minimum so the merge median stays visible.
   Render with Chrome:
     chrome --headless=new --hide-scrollbars --force-device-scale-factor=1 \
@@ -36,19 +36,19 @@
 <body>
   <div class="left">
     <p class="eyebrow">Whose Move Is It</p>
-    <h1>A Kubernetes pull request waits 4 days for review, then merges in under 2 hours</h1>
-    <p class="tail">For 1 in 10, the review wait reaches about 7 weeks.</p>
-    <p class="byline">By Gurnek Khaira · Snapshot of 4 October 2026 · 2,297 pull requests</p>
+    <h1>A Kubernetes pull request waits 3 days for review, then merges in under 2 hours</h1>
+    <p class="tail">For 1 in 10, the review wait reaches about 6 weeks.</p>
+    <p class="byline">By Gurnek Khaira · Snapshot of 21 November 2026 · 2,893 pull requests</p>
   </div>
   <div class="card">
     <h2>Where a merged PR’s time goes</h2>
     <div class="row">
-      <div class="row-head"><span>Review (lgtm)</span><span>median 4.1 d</span></div>
-      <div class="track"><span class="p90" style="width: 304px"></span><span class="median" style="width: 25.4px"></span></div>
+      <div class="row-head"><span>Review (lgtm)</span><span>median 2.9 d</span></div>
+      <div class="track"><span class="p90" style="width: 304px"></span><span class="median" style="width: 21.3px"></span></div>
     </div>
     <div class="row">
       <div class="row-head"><span>Merge, once approved</span><span>median 1.7 h</span></div>
-      <div class="track"><span class="p90" style="width: 22.5px"></span><span class="median" style="width: 3px"></span></div>
+      <div class="track"><span class="p90" style="width: 13.6px"></span><span class="median" style="width: 3px"></span></div>
     </div>
     <p class="key">Darker: median. Lighter: slowest 10%.</p>
   </div>

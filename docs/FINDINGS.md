@@ -53,3 +53,70 @@ Fix: each now says what it opens, for example "272: show the open PRs with no hu
 - **Zoom to 200%:** the layout reflows to one column with nothing clipped.
 - **Evidence panels** (scripted locally before launch): open with focus on their heading, "Show all" expands, Escape closes and returns focus, a second click toggles closed, and every external link opens with `rel=noopener`.
 - **No blame:** the page names teams and stages, never people, and says why.
+
+---
+
+# Second round: snapshot refresh, tested locally 2026-11-21
+
+Tested before deploy, on the 2026-11-21 snapshot, against the same promises plus one more: the page says how old its snapshot is (ADR 0011). The live site still serves the 2026-10-04 snapshot, so this round runs again on https://whosemoveisit.gurn3k.com once it's deployed.
+
+How it was tested: the page's script run against damaged data files through the same small DOM the tests use; Chrome over its DevTools protocol, with the site's real CSP, at 320, 360, 390, 599, 600, 768 and 1024px, each again with a wider fallback font, in light and dark; hostile URL fragments and query strings; raw HTTP requests against the local preview server; and an independent review of the diff by a reviewer who didn't write it. No paid calls were made for testing.
+
+## Findings
+
+All fixed, each with a test shown to fail without its fix.
+
+### 1. A damaged brief file stopped the whole report from drawing
+
+Steps: serve a `brief.json` whose bullet has no `prs` list.
+Promise broken: "If no brief passes, the snapshot ships without one" (README); the brief must never block the metrics.
+What happened: drawing the brief threw, so the report stopped at "Loading". (The prerendered copy would still have shown, and `npm run prerender` fails on such a file, so a visitor was unlikely to see it.)
+Status: Fixed. The page checks the brief's whole shape first and shows "No brief for this snapshot" for anything it can't draw in full.
+
+### 2. A refreshed snapshot would have shown last month's brief
+
+Steps: refresh `metrics.json` without rewriting `brief.json`.
+Promise broken: every brief claim cites PRs from its input (ADR 0003).
+What happened: the page drew any brief beside any snapshot. October's brief, citing October's PRs, would have sat under November's numbers.
+Status: Fixed. A brief shows only beside the snapshot it was written for, and a test checks the committed pair.
+
+### 3. The README and the page disagreed about whose move dominates
+
+Steps: read the README's last finding, then the page's second finding.
+Promise broken: the README reports only measured results (PRD).
+What happened: the README said waiting on the author (383) outnumbers waiting on a reviewer (303). The page counts every reviewer-side state and says 641 open PRs (47%) wait on a reviewer or approver. Both sets of numbers were right; the README's comparison wasn't.
+Status: Fixed. The README groups the backlog the way the page does, and a test ties the two sentences.
+
+### 4. The model was told two counts were "close" whatever they were
+
+Steps: read the brief's input facts for the 2026-11-21 snapshot.
+Promise broken: code computes facts, the model only words them (ADR 0008).
+What happened: the author-versus-reviewer fact always said "close to". It was true in October (337 against 368), false in November (383 against 303), and the first November brief repeated it.
+Status: Fixed. The comparison is computed, and the brief was written again from the corrected facts.
+
+### 5. The age could say "today" beside yesterday's date
+
+Steps: open the page just after midnight UTC on the day after the fetch.
+What happened: age counted 24-hour periods from the fetch time, while the date beside it is a UTC calendar date.
+Status: Fixed; age counts UTC calendar days.
+
+### 6. A snapshot without a date showed "Snapshot of Invalid Date"
+
+Status: Fixed. The page shows its load error instead of undated numbers.
+
+### 7. The local preview server answered 404 for `/` on Windows
+
+Status: Fixed. It normalised URL paths with Windows' rules. The fix converts a decoded backslash to `/` before normalising; traversal attempts (`/../.env`, `/..%5C..%5C.env`, `/%2e%2e%5c.env`) all return 404. Production is Vercel and wasn't affected.
+
+## Not tested
+
+- The deployed site. This round repeats on the live domain after deploy.
+- Firefox, Safari and real phones; a real screen reader.
+- The brief's wording is checked by code; whether each bullet is a fair reading is the person's review, not done yet at the time of writing.
+
+## What held up
+
+- **No horizontal scroll** at any tested width, with the self-hosted font or a wider fallback, and the stale note fits at 320px.
+- **Hostile URLs are inert:** markup and script in the fragment or query string drew nothing and opened no dialog; the CSP logged no violations from the page itself.
+- **Text stays text:** a brief bullet containing an `<img onerror>` tag is drawn as literal text.
+- **Every generated figure** in the README and on the page matches `metrics.json` (checked independently).

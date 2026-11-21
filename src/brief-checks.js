@@ -6,6 +6,7 @@
 // - keyFindings: what a good brief should cover, for scoring (not for blocking).
 
 import { humanDays, buildComparisons, numbersIn } from './brief.js';
+import { compareCounts } from './compare.js';
 
 export { numbersIn };
 
@@ -108,7 +109,7 @@ export function keyFindings(metrics) {
     },
     {
       id: 'author-vs-reviewer',
-      finding: "The author's move is about as common as the reviewer's.",
+      finding: `The author's queue is ${compareCounts(b.author.count, b.reviewer.count).common} the queue waiting for a reviewer's lgtm.`,
       markers: [b.author.count.toLocaleString('en-US'), b.reviewer.count.toLocaleString('en-US')],
     },
   ];

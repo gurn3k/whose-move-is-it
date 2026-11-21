@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { renderSite } from '../src/fake-dom.js';
 import { prerender } from '../src/prerender.js';
+import { readmeFindings, fillReadme } from '../src/readme.js';
 
 // Expected values are computed from the committed snapshot, the same files the
 // live page reads, so a refreshed snapshot keeps these tests meaningful.
@@ -167,4 +168,146 @@ test('index.html carries the report as static HTML, matching this snapshot', asy
   assert.ok(html.includes(`<h1>${headline}</h1>`));
   assert.doesNotMatch(html, /Loading the snapshot/);
   assert.doesNotMatch(html, / style="/, 'inline styles would break the CSP');
+});
+
+// ---- snapshot age (ADR 0011) ----
+const fetched = Date.parse(metrics.fetchedAt);
+const DAY = 86_400_000;
+const bylineAt = async (now) => {
+  const { main } = await renderSite({ metrics, brief, now });
+  return { byline: textOf(main.all('p', 'byline')[0]), stale: main.all('p', 'stale-note').map(textOf) };
+};
+
+test('the prerendered copy states the snapshot date with no age, since it has no clock', async () => {
+  const { byline, stale } = await bylineAt(null);
+  assert.doesNotMatch(byline, /ago|today/);
+  assert.deepEqual(stale, []);
+  assert.doesNotMatch(html, /days ago|stale-note/);
+});
+
+test('a fresh snapshot shows its age and no warning', async () => {
+  assert.match((await bylineAt(fetched + 2 * 60_000)).byline, /\(today\)/);
+  assert.match((await bylineAt(fetched + DAY + 1)).byline, /\(1 day ago\)/);
+  const at29 = await bylineAt(fetched + 29 * DAY + 1);
+  assert.match(at29.byline, /\(29 days ago\)/);
+  assert.deepEqual(at29.stale, []);
+});
+
+test('a snapshot 30 or more days old says so above the findings', async () => {
+  const at30 = await bylineAt(fetched + 30 * DAY + 1);
+  assert.match(at30.byline, /\(30 days ago\)/);
+  assert.equal(at30.stale.length, 1);
+  assert.match(at30.stale[0], /^This snapshot is 30 days old\. Open PRs may have moved since/);
+  assert.match((await bylineAt(fetched + 400 * DAY)).stale[0], /400 days old/);
+});
+
+test('a clock behind the snapshot shows no age rather than a negative one', async () => {
+  const { byline, stale } = await bylineAt(fetched - 5 * DAY);
+  assert.doesNotMatch(byline, /ago|today|-/);
+  assert.deepEqual(stale, []);
+});
+
+// ---- README figures come from the snapshot ----
+test('the README findings match this snapshot', async () => {
+  const readme = readFileSync('README.md', 'utf8');
+  // Run npm run prerender when this fails.
+  assert.equal(readme, fillReadme(readme, readmeFindings(metrics, headline)), 'README.md findings are stale: run npm run prerender');
+  const block = readme.slice(readme.indexOf('<!-- generated:findings -->'), readme.indexOf('<!-- /generated:findings -->'));
+  for (const figure of [count(o.merged.n), count(o.backlog.n), count(o.backlog.untouched.count), count(metrics.bottlenecks[0].prDays), days(o.merged.review.median)]) {
+    assert.ok(block.includes(figure), `README findings should state ${figure}`);
+  }
+  assert.ok(block.includes(`snapshot of ${metrics.fetchedAt.slice(0, 10)}`));
+});
+
+test('no snapshot figure is typed by hand outside the generated README section', () => {
+  const readme = readFileSync('README.md', 'utf8');
+  const outside = readme.slice(0, readme.indexOf('<!-- generated:findings -->')) + readme.slice(readme.indexOf('<!-- /generated:findings -->'));
+  for (const figure of [count(o.merged.n), count(o.backlog.n), days(o.merged.review.median), days(o.merged.cycle.median), count(metrics.bottlenecks[0].prDays)]) {
+    assert.ok(!outside.includes(figure), `${figure} appears outside the generated findings; move it inside or drop it`);
+  }
+});
+
+// ---- the brief belongs to its snapshot ----
+test('the committed brief was written for the committed snapshot', () => {
+  // Run npm run brief (or ship without one) after refreshing the snapshot.
+  assert.equal(brief.metricsFetchedAt, metrics.fetchedAt, 'brief.json was written for another snapshot');
+});
+
+test('a brief written for another snapshot is not shown', async () => {
+  const old = { ...brief, metricsFetchedAt: '2020-01-01T00:00:00.000Z' };
+  const { main } = await renderSite({ metrics, brief: old });
+  const section = textOf(main.byId('brief'));
+  assert.match(section, /written for a different snapshot, so it isn’t shown/);
+  for (const b of brief.bullets) assert.ok(!section.includes(b.text.slice(0, 40)), 'an old bullet is on the page');
+  assert.equal(textOf(main.all('h1')[0]), headline, 'the rest of the report still draws');
+});
+
+test('the README findings keep the README’s own line endings', () => {
+  const lf = 'intro\n<!-- generated:findings -->\nold\n<!-- /generated:findings -->\nend\n';
+  const crlf = lf.replace(/\n/g, '\r\n');
+  const findings = 'line one\n\nline two';
+  assert.ok(!/\r/.test(fillReadme(lf, findings)));
+  const out = fillReadme(crlf, findings);
+  assert.ok(!/[^\r]\n/.test(out), 'every newline in a CRLF README stays CRLF');
+  assert.equal(fillReadme(out, findings), out, 'filling twice changes nothing');
+});
+
+// ---- damaged data files fail closed ----
+test('a damaged brief shows no brief, and the rest of the report still draws', async () => {
+  const damaged = [
+    { ...brief, bullets: 'oops' },
+    { ...brief, bullets: [{ text: 'a bullet with no citations' }] },
+    { ...brief, bullets: [{ text: 'bad citation', prs: ['#1'] }] },
+    { ...brief, bullets: [{ text: '', prs: [1] }] },
+    { ...brief, generatedAt: 'not a date' },
+    { ...brief, review: { reviewedAt: '2026-11-21', edits: 'x' } },
+    [1, 2],
+    'hello',
+  ];
+  for (const b of damaged) {
+    const { main } = await renderSite({ metrics, brief: b });
+    assert.match(textOf(main.byId('brief')), /No brief for this snapshot\./, JSON.stringify(b).slice(0, 80));
+    assert.equal(textOf(main.all('h1')[0]), headline);
+  }
+});
+
+test('brief text is drawn as text, never as markup', async () => {
+  const b = { ...brief, bullets: [{ text: '<img src=x onerror=alert(1)>', prs: [1] }] };
+  const { main } = await renderSite({ metrics, brief: b });
+  assert.ok(!main.innerHTML.includes('<img src=x'));
+  assert.ok(textOf(main.byId('brief')).includes('<img src=x onerror=alert(1)>'));
+});
+
+test('a snapshot without a valid date draws no numbers', async () => {
+  for (const fetchedAt of ['not a date', undefined, 12]) {
+    const { main } = await renderSite({ metrics: { ...metrics, fetchedAt }, brief });
+    assert.equal(main.all('p', 'load-error').length, 1, String(fetchedAt));
+    assert.equal(main.all('h1').length, 0);
+  }
+});
+
+test('the age counts calendar days in UTC, like the date beside it', async () => {
+  const d = new Date(metrics.fetchedAt);
+  const utc = (dayOffset, h, min = 0) => Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + dayOffset, h, min);
+  assert.match((await bylineAt(utc(0, 23, 59))).byline, /\(today\)/);
+  assert.match((await bylineAt(utc(1, 0, 1))).byline, /\(1 day ago\)/, 'just after midnight UTC the next day');
+  assert.match((await bylineAt(utc(30, 0, 1))).byline, /\(30 days ago\)/);
+  assert.equal((await bylineAt(utc(30, 0, 1))).stale.length, 1);
+});
+
+test('the README compares the author queue with the reviewer side the way the page does', async () => {
+  const readme = readFileSync('README.md', 'utf8');
+  const b = o.backlog;
+  const reviewSide = b.untouched.count + b.reviewer.count + b.approver.count;
+  const pctOf = (n) => Math.round((n / b.n) * 100);
+  const sentence = `${count(reviewSide)} of ${count(b.n)} open PRs (${pctOf(reviewSide)}%) wait on a reviewer or approver`;
+  assert.ok(page.includes(sentence), 'the page states it');
+  assert.ok(readme.includes(sentence), 'the README states it the same way');
+  assert.ok(!/author is more common than waiting on a reviewer/.test(readme));
+});
+
+test('the README markers must appear exactly once', () => {
+  const twice = '<!-- generated:findings -->\n<!-- /generated:findings -->\n<!-- generated:findings -->\n<!-- /generated:findings -->\n';
+  assert.throws(() => fillReadme(twice, 'x'), /more than once/);
+  assert.throws(() => fillReadme('no markers', 'x'), /missing/);
 });

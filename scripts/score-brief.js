@@ -1,5 +1,7 @@
-// Score briefs against ground truth computed from site/data/metrics.json.
-//   node scripts/score-brief.js [brief.json ...] [--sheet]
+// Score briefs against ground truth computed from a snapshot's metrics.
+//   node scripts/score-brief.js [brief.json ...] [--sheet] [--metrics=path]
+// --metrics defaults to site/data/metrics.json, the live snapshot. Past runs are
+// scored against the snapshot they were written from (npm run eval:brief).
 // With no files, scores site/data/brief.json. --sheet writes a review sheet per
 // brief to eval/brief/reviews/ for a person to mark each bullet true or false.
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
@@ -10,9 +12,10 @@ import { allowedNumbers, buildTraps, findTraps, keyFindings, coverage } from '..
 const args = process.argv.slice(2);
 const sheet = args.includes('--sheet');
 const files = args.filter((a) => !a.startsWith('--'));
+const metricsPath = args.find((a) => a.startsWith('--metrics='))?.slice('--metrics='.length) ?? 'site/data/metrics.json';
 if (files.length === 0) files.push('site/data/brief.json');
 
-const metrics = JSON.parse(await readFile('site/data/metrics.json', 'utf8'));
+const metrics = JSON.parse(await readFile(metricsPath, 'utf8'));
 const input = buildInput(metrics);
 const groups = citationGroups(input);
 const numbers = allowedNumbers(input);
