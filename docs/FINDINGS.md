@@ -120,3 +120,7 @@ Status: Fixed. It normalised URL paths with Windows' rules. The fix converts a d
 - **Hostile URLs are inert:** markup and script in the fragment or query string drew nothing and opened no dialog; the CSP logged no violations from the page itself.
 - **Text stays text:** a brief bullet containing an `<img onerror>` tag is drawn as literal text.
 - **Every generated figure** in the README and on the page matches `metrics.json` (checked independently).
+
+## Live recheck, 2026-11-21
+
+Rerun on https://whosemoveisit.gurn3k.com after the deploy: the page serves the 2026-11-21 snapshot, with the same CSP, `nosniff`, referrer and permissions policies, and HSTS. Repository files (`package.json`, `README.md`, `docs/`, `src/`, `test/`, `scripts/`, `eval/`, `.env`, `.git/config`, `vercel.json`) all return 404. No horizontal scroll at 320 to 1024px, with the page's font or a wider fallback. Markup and script in the fragment or query string drew nothing and opened no dialog, and the console showed no errors. No new findings.
