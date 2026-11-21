@@ -546,8 +546,14 @@ function figureTeams(m) {
   return fig;
 }
 
-function briefSection(brief) {
+function briefSection(brief, m) {
   const section = el('section', { class: 'part', id: 'brief', 'aria-labelledby': 'brief-h' }, el('h2', { id: 'brief-h' }, 'Risks brief'));
+  // A brief cites the PRs and numbers of the snapshot it was written from, so
+  // one written for another snapshot is never shown beside this one's numbers.
+  if (brief && brief.metricsFetchedAt !== m.fetchedAt) {
+    section.append(el('p', { class: 'lede' }, 'No brief for this snapshot yet: the last one was written for an earlier snapshot, so it isn’t shown. The numbers in this report are unaffected.'));
+    return section;
+  }
   if (!brief || !Array.isArray(brief.bullets) || brief.bullets.length === 0) {
     section.append(el('p', { class: 'lede' }, 'No brief for this snapshot. The numbers in this report are unaffected.'));
     return section;
@@ -682,7 +688,7 @@ async function load(path) {
   }
   const brief = await load('data/brief.json').catch(() => null);
   const f = findings(m);
-  main.replaceChildren(opening(m, f), backlogSection(m, f), queuesSection(m, f), teamsSection(m, f), briefSection(brief), methodSection(m));
+  main.replaceChildren(opening(m, f), backlogSection(m, f), queuesSection(m, f), teamsSection(m, f), briefSection(brief, m), methodSection(m));
   colophon(m);
   // Sections are drawn after load, so the browser's own jump to #backlog found nothing. Do it now.
   const target = location.hash && document.getElementById(decodeURIComponent(location.hash.slice(1)));

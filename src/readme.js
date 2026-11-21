@@ -2,6 +2,8 @@
 // stale figures behind. scripts/prerender.js writes them between the markers;
 // test/site.test.js fails if the README and the snapshot disagree.
 
+import { compareCounts } from './compare.js';
+
 const count = (n) => n.toLocaleString('en-US');
 const pct = (part, whole) => Math.round((part / whole) * 100);
 // The page's duration rule: hours under a day, one decimal under 10 days, whole days after.
@@ -44,9 +46,7 @@ export function readmeFindings(m, headline) {
     `Their median wait is ${days(b.untouched.waitingDays.median)}` +
     (untouched ? `, and ${count(untouched.count)} of them belong to sig/${untouched.sig}, the ${ORDINAL[untouched.rank] ?? `number ${untouched.rank}`} queue overall.` : '.'));
 
-  const ratio = b.author.count / b.reviewer.count;
-  const compare = ratio >= 0.8 && ratio <= 1.25 ? 'about as common as' : ratio > 1 ? 'more common than' : 'less common than';
-  out.push(`Waiting on the author is ${compare} waiting on a reviewer: ${count(b.author.count)} open PRs need a rebase, requested changes or a process label from their author, against ${count(b.reviewer.count)} waiting for review.`);
+  out.push(`Waiting on the author is ${compareCounts(b.author.count, b.reviewer.count).common} waiting on a reviewer: ${count(b.author.count)} open PRs need a rebase, requested changes or a process label from their author, against ${count(b.reviewer.count)} waiting for review.`);
 
   return out.join('\n\n');
 }
@@ -58,5 +58,8 @@ export function fillReadme(readme, findings) {
   const start = readme.indexOf(open);
   const end = readme.indexOf(close);
   if (start < 0 || end < start) throw new Error(`README.md is missing the ${open} … ${close} markers`);
-  return `${readme.slice(0, start + open.length)}\n${findings}\n${readme.slice(end)}`;
+  // Keep the README's own line endings: a Windows checkout may have CRLF.
+  const eol = readme.includes('\r\n') ? '\r\n' : '\n';
+  const body = findings.replace(/\r?\n/g, eol);
+  return `${readme.slice(0, start + open.length)}${eol}${body}${eol}${readme.slice(end)}`;
 }

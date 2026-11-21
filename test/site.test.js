@@ -226,3 +226,28 @@ test('no snapshot figure is typed by hand outside the generated README section',
     assert.ok(!outside.includes(figure), `${figure} appears outside the generated findings; move it inside or drop it`);
   }
 });
+
+// ---- the brief belongs to its snapshot ----
+test('the committed brief was written for the committed snapshot', () => {
+  // Run npm run brief (or ship without one) after refreshing the snapshot.
+  assert.equal(brief.metricsFetchedAt, metrics.fetchedAt, 'brief.json was written for another snapshot');
+});
+
+test('a brief written for another snapshot is not shown', async () => {
+  const old = { ...brief, metricsFetchedAt: '2020-01-01T00:00:00.000Z' };
+  const { main } = await renderSite({ metrics, brief: old });
+  const section = textOf(main.byId('brief'));
+  assert.match(section, /written for an earlier snapshot, so it isn’t shown/);
+  for (const b of brief.bullets) assert.ok(!section.includes(b.text.slice(0, 40)), 'an old bullet is on the page');
+  assert.equal(textOf(main.all('h1')[0]), headline, 'the rest of the report still draws');
+});
+
+test('the README findings keep the README’s own line endings', () => {
+  const lf = 'intro\n<!-- generated:findings -->\nold\n<!-- /generated:findings -->\nend\n';
+  const crlf = lf.replace(/\n/g, '\r\n');
+  const findings = 'line one\n\nline two';
+  assert.ok(!/\r/.test(fillReadme(lf, findings)));
+  const out = fillReadme(crlf, findings);
+  assert.ok(!/[^\r]\n/.test(out), 'every newline in a CRLF README stays CRLF');
+  assert.equal(fillReadme(out, findings), out, 'filling twice changes nothing');
+});

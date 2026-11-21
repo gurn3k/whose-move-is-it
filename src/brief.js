@@ -1,5 +1,6 @@
 // Risks brief: code picks the facts, the model only words them (ADR 0008),
 // and every bullet must cite PRs that were in its input (ADR 0003).
+import { compareCounts } from './compare.js';
 
 export const MIN_BULLETS = 4;
 export const MAX_BULLETS = 6;
@@ -99,7 +100,7 @@ export function buildComparisons(metrics) {
   const reviewer = o.backlog.reviewer.count;
   if (author > 0 && reviewer > 0) {
     out.push({
-      fact: `${count(author)} open PRs are waiting on their author, close to the ${count(reviewer)} waiting for a reviewer's lgtm.`,
+      fact: `${count(author)} open PRs are waiting on their author, ${compareCounts(author, reviewer).than} the ${count(reviewer)} waiting for a reviewer's lgtm.`,
       examples: longestWaiting(open.filter((r) => r.state === 'author'), EXAMPLES_PER_QUEUE),
     });
   }
@@ -154,7 +155,7 @@ Rules:
 - Use only the facts in the JSON you are given. Copy numbers and durations exactly as written; do not round, convert or compute new ones.
 - Write ${MIN_BULLETS} to ${MAX_BULLETS} bullets, each one or two plain sentences. Lead with the finding, then the numbers.
 - Each bullet rewords one or two facts from "facts" in plain English. Do not use any JSON key names in the text.
-- Prefer the comparison facts (shares, "close to", median versus slowest 10%): use at least two of them. Do not compute any comparison, share or total yourself.
+- Prefer the comparison facts (shares, "close to" or "more than", median versus slowest 10%): use at least two of them. Do not compute any comparison, share or total yourself.
 - Do not speculate about consequences or causes the data does not show (for example releases, downstream work, morale or staffing).
 - Vary sentence structure. Do not start two bullets the same way. Never write "which matters because".
 - Every bullet cites 1 to 5 PRs in its "prs" array, all from the "examples" list of one fact that bullet describes. Never cite any other PR.

@@ -4,8 +4,10 @@ import { readFileSync } from 'node:fs';
 import { buildInput, citationGroups, validateBrief } from '../src/brief.js';
 import { allowedNumbers, buildTraps, findTraps, keyFindings, coverage } from '../src/brief-checks.js';
 
-// Ground truth is computed from the committed snapshot, the same file the dashboard reads.
-const metrics = JSON.parse(readFileSync('site/data/metrics.json', 'utf8'));
+// The past runs in eval/brief/history were written from the 2026-10-04 snapshot,
+// so they're scored against that snapshot, kept beside them. The live snapshot's
+// own facts are checked at the end of this file.
+const metrics = JSON.parse(readFileSync('eval/brief/history/metrics-2026-10-04.json', 'utf8'));
 const input = buildInput(metrics);
 const groups = citationGroups(input);
 const checks = { numbers: allowedNumbers(input), traps: buildTraps(metrics) };
@@ -73,4 +75,15 @@ test('describing PRs as stalled is not a consequence claim; stalling other work 
 
 test('run 7, the reviewed and published brief, passes as the model wrote it', () => {
   assert.deepEqual(errorsFor(run(7)), []);
+});
+
+test('every fact from the live snapshot passes its own number and trap checks', () => {
+  const live = JSON.parse(readFileSync('site/data/metrics.json', 'utf8'));
+  const liveInput = buildInput(live);
+  const liveChecks = { numbers: allowedNumbers(liveInput), traps: buildTraps(live) };
+  const liveGroups = citationGroups(liveInput);
+  for (const f of liveInput.facts) {
+    assert.deepEqual(findTraps(f.fact, liveChecks.traps).map((t) => t.id), [], f.fact);
+    assert.deepEqual(validateBrief({ bullets: [{ text: f.fact, prs: f.examples.slice(0, 1) }] }, liveGroups, liveChecks).errors.filter((e) => !/expected/.test(e)), [], f.fact);
+  }
 });

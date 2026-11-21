@@ -14,8 +14,8 @@
     "serve": "node scripts/serve.js",
     "score:brief": "node scripts/score-brief.js",
     "cross-check": "node scripts/cross-check-devstats.js",
-    "eval:brief": "node scripts/score-brief.js eval/brief/history/run-1.json eval/brief/history/run-2.json eval/brief/history/run-3.json eval/brief/history/run-6.json eval/brief/history/run-7.json",
+    "eval:brief": "node scripts/score-brief.js --metrics=eval/brief/history/metrics-2026-10-04.json eval/brief/history/run-1.json eval/brief/history/run-2.json eval/brief/history/run-3.json eval/brief/history/run-6.json eval/brief/history/run-7.json",
     "test": "node --test test/*.test.js"
   },
-  "license": "UNLICENSED"
+  "license": "MIT"
 }
