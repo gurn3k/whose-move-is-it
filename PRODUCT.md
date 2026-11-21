@@ -23,14 +23,14 @@ Kubernetes already publishes detailed PR-velocity charts through CNCF DevStats. 
 ## Operating Context
 
 - A hiring manager opens the link on a laptop or a phone, between other tasks, often from a resume PDF or LinkedIn message.
-- The page is one static snapshot (fetched 2026-10-04), refreshed by the owner on demand (ADR 0009). The fetch date must always be visible.
+- The page is one static snapshot, refreshed by the owner on demand (ADR 0009). The fetch date and the snapshot's age must always be visible (ADR 0011).
 - A visitor who wants proof clicks a number and gets the list of PRs behind it, each linking to GitHub.
 - The repo (PRD, ADRs, eval, build report, findings) is the second stop for anyone judging the work.
 
 ## Capabilities and Constraints
 
 - Static site (`site/`): one HTML page, `app.js`, `app.css`, and JSON data. No build step, no runtime dependencies, served by Vercel with a strict CSP (scripts and styles from the site itself only, so no web fonts or CDNs).
-- Data: 1,027 merged PRs (90 days) and 1,270 open PRs, each open PR in exactly one whose-move state. Medians and p90 only; groups under 10 PRs show `—`.
+- Data: every PR merged in the last 90 days and every open PR, each open PR in exactly one whose-move state. Medians and p90 only; groups under 10 PRs show `—`.
 - Every number must open its PR list. Light and dark themes, usable at 360px.
 - The risks brief is model-written, checked by code, and reviewed by a person before publishing.
 - Terminology: "SIG" (Kubernetes team), "lgtm" and "approved" (the two review labels), "PR-days of waiting" (the ranking unit), "whose move" (backlog state).

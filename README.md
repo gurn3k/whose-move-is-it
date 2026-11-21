@@ -27,20 +27,20 @@ Each open PR goes into exactly one backlog state, according to whose move it is:
 Queues are ranked by PR-days of waiting, which is the number of open PRs in a team-and-stage queue multiplied by their median wait. A queue ranks high if many PRs are stuck in it, if they've been stuck a long time, or both.
 
 <!-- generated:findings -->
-## Findings (snapshot of 2026-10-04)
+## Findings (snapshot of 2026-11-21)
 
-These come from 1,027 PRs merged between 2026-07-06 and 2026-10-03 and all 1,270 PRs open on 2026-10-04.
+These come from 1,526 PRs merged between 2026-08-23 and 2026-11-20 and all 1,367 PRs open on 2026-11-21.
 
-A Kubernetes pull request waits 4 days for review, then merges in under 2 hours. The median merged PR took 7.3 days from ready to merged. Reaching lgtm took 4.1 days at the median, and about 49 days or longer for the slowest 1 in 10 (roughly 7 weeks). Once both labels were set, the median PR merged in 1.7 hours.
+A Kubernetes pull request waits 3 days for review, then merges in under 2 hours. The median merged PR took 5.0 days from ready to merged. Reaching lgtm took 2.9 days at the median, and about 42 days or longer for the slowest 1 in 10 (roughly 6 weeks). Once both labels were set, the median PR merged in 1.7 hours.
 
-Two review queues hold the most waiting. sig/api-machinery has 120 open PRs waiting for review, with a median wait of 85 days (10,198 PR-days). sig/node has 120 open PRs waiting for review, with a median wait of 75 days (9,032 PR-days).
+Two review queues hold the most waiting. sig/api-machinery has 104 open PRs waiting for review, with a median wait of 66 days (6,912 PR-days). sig/node has 81 open PRs waiting for review, with a median wait of 58 days (4,738 PR-days).
 
-272 open PRs, 21% of the backlog, have had no human response. Their median wait is 41 days, and 94 of them belong to sig/api-machinery, the third-largest queue overall.
+295 open PRs, 22% of the backlog, have had no human response. Their median wait is 37 days, and 114 of them belong to sig/api-machinery, the third-largest queue overall.
 
-Waiting on the author is about as common as waiting on a reviewer: 337 open PRs need a rebase, requested changes or a process label from their author, against 368 waiting for review.
+Waiting on the author is more common than waiting on a reviewer: 383 open PRs need a rebase, requested changes or a process label from their author, against 303 waiting for review.
 <!-- /generated:findings -->
 
-The main finding agrees with Kubernetes' own DevStats. On the 2026-10-04 snapshot, recomputing DevStats' "PR Time to Approve and Merge" definitions on this data, for PRs created in August and September 2026, shows the same pattern: most of the time goes to waiting for lgtm, and merging after approval takes hours at the median. The medians differ by 16 to 28%; the [cross-check](docs/research/devstats-cross-check.md) covers the likely causes.
+The main finding agrees with Kubernetes' own DevStats. Recomputing DevStats' "PR Time to Approve and Merge" definitions on this data shows the same pattern for PRs created in September and October 2026: reaching lgtm is the longest stage, and merging after approval takes hours at the median. The medians themselves differ more than they did on the October snapshot: our median time to lgtm is 1.6 to 3.2 times DevStats'. The [cross-check](docs/research/devstats-cross-check.md) records both runs and what is and isn't known about the gap.
 
 The findings above are written from the snapshot by `npm run prerender`, and `npm test` fails if they fall out of step with it. `npm run snapshot` refreshes everything.
 
