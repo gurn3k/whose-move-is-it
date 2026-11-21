@@ -142,7 +142,7 @@ h3 { font-size: 19px; letter-spacing: -0.005em; }
 h1 { font-size: clamp(34px, 4.6vw, 54px); letter-spacing: -0.025em; line-height: 1.06; margin-bottom: 18px; }
 .byline { color: var(--ink-3); font-size: 15px; margin: 0 0 24px; }
 .byline a { color: inherit; }
-.stale-note { margin: -12px 0 24px; padding: 10px 14px; max-width: 60ch; font-size: 15px; color: var(--ink); background: var(--wash); border-left: 3px solid var(--blue); }
+.stale-note { margin: -12px 0 24px; padding: 10px 14px; max-width: 60ch; font-size: 15px; color: var(--ink); background: var(--wash); border: 1px solid var(--rule-strong); border-radius: 4px; }
 .summary { font-size: 19px; line-height: 1.55; margin: 0 0 14px; max-width: 60ch; font-weight: 600; }
 .plain { margin: 0 0 32px; max-width: 64ch; color: var(--ink); }
 .findings-head { font-size: 15px; font-weight: 700; margin: 0 0 6px; }
