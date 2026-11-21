@@ -8,9 +8,9 @@ Run 2026-10-06 with `node scripts/cross-check-devstats.js 2026-08 2026-09`. It c
 
 DevStats' definitions, from [`metrics/kubernetes/time_metrics.sql`](https://github.com/cncf/devstats/blob/master/metrics/kubernetes/time_metrics.sql): merged PRs grouped by the month they were **created**, clock starting at **open**, the **first** `lgtm` and `approved` label adds, missing stages falling back to the next event or to zero, and `percentile_disc` (nearest rank) median and 85th percentile.
 
-### Cohorts are complete
+### Cohort counts matched GitHub at the time
 
-PRs created in each month and merged, counted with GitHub search on 2026-10-06:
+PRs created in each month and merged, counted with GitHub search on 2026-10-06. *Correction, 2026-11-21:* this showed our data matched GitHub on that day, not that the cohorts were finished. PRs from both months kept merging afterwards, and September's cohort grew from 265 to 355 merged PRs.
 
 | Created | Merged PRs on GitHub | In our data | Merged after our fetch |
 |---|---|---|---|
@@ -52,7 +52,9 @@ July is left out: our data starts with merges on 2026-07-06, so July's cohort is
 
 Run 2026-11-21 with `node scripts/cross-check-devstats.js 2026-09 2026-10`. The snapshot's merged window now starts on 2026-08-23, so August's cohort is missing its earliest merges and is left out, as July was before.
 
-### Cohorts are complete
+### Cohort counts match GitHub at fetch time
+
+PRs created in each month and merged, counted with GitHub search on 2026-11-21. Both cohorts can still grow as older PRs merge.
 
 | Created | Merged PRs on GitHub | In our data |
 |---|---|---|

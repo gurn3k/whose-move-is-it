@@ -237,7 +237,7 @@ test('a brief written for another snapshot is not shown', async () => {
   const old = { ...brief, metricsFetchedAt: '2020-01-01T00:00:00.000Z' };
   const { main } = await renderSite({ metrics, brief: old });
   const section = textOf(main.byId('brief'));
-  assert.match(section, /written for an earlier snapshot, so it isn’t shown/);
+  assert.match(section, /written for a different snapshot, so it isn’t shown/);
   for (const b of brief.bullets) assert.ok(!section.includes(b.text.slice(0, 40)), 'an old bullet is on the page');
   assert.equal(textOf(main.all('h1')[0]), headline, 'the rest of the report still draws');
 });
@@ -284,4 +284,30 @@ test('a snapshot without a valid date draws no numbers', async () => {
     assert.equal(main.all('p', 'load-error').length, 1, String(fetchedAt));
     assert.equal(main.all('h1').length, 0);
   }
+});
+
+test('the age counts calendar days in UTC, like the date beside it', async () => {
+  const d = new Date(metrics.fetchedAt);
+  const utc = (dayOffset, h, min = 0) => Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + dayOffset, h, min);
+  assert.match((await bylineAt(utc(0, 23, 59))).byline, /\(today\)/);
+  assert.match((await bylineAt(utc(1, 0, 1))).byline, /\(1 day ago\)/, 'just after midnight UTC the next day');
+  assert.match((await bylineAt(utc(30, 0, 1))).byline, /\(30 days ago\)/);
+  assert.equal((await bylineAt(utc(30, 0, 1))).stale.length, 1);
+});
+
+test('the README compares the author queue with the reviewer side the way the page does', async () => {
+  const readme = readFileSync('README.md', 'utf8');
+  const b = o.backlog;
+  const reviewSide = b.untouched.count + b.reviewer.count + b.approver.count;
+  const pctOf = (n) => Math.round((n / b.n) * 100);
+  const sentence = `${count(reviewSide)} of ${count(b.n)} open PRs (${pctOf(reviewSide)}%) wait on a reviewer or approver`;
+  assert.ok(page.includes(sentence), 'the page states it');
+  assert.ok(readme.includes(sentence), 'the README states it the same way');
+  assert.ok(!/author is more common than waiting on a reviewer/.test(readme));
+});
+
+test('the README markers must appear exactly once', () => {
+  const twice = '<!-- generated:findings -->\n<!-- /generated:findings -->\n<!-- generated:findings -->\n<!-- /generated:findings -->\n';
+  assert.throws(() => fillReadme(twice, 'x'), /more than once/);
+  assert.throws(() => fillReadme('no markers', 'x'), /missing/);
 });

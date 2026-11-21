@@ -10,6 +10,7 @@ const pct = (part, whole) => Math.round((part / whole) * 100);
 const days = (d) => (d < 1 ? `${(d * 24).toFixed(1)} hours` : `${d < 10 ? d.toFixed(1) : count(Math.round(d))} days`);
 const isoDay = (iso) => iso.slice(0, 10);
 const ORDINAL = ['', 'largest', 'second-largest', 'third-largest', 'fourth-largest', 'fifth-largest'];
+const nth = (n) => ORDINAL[n] ?? `${n}${[11, 12, 13].includes(n % 100) ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' })[n % 10] ?? 'th'}-largest`;
 const QUEUE = {
   untouched: 'with no human response',
   reviewer: 'waiting for review',
@@ -44,9 +45,13 @@ export function readmeFindings(m, headline) {
   const untouched = m.bottlenecks.find((q) => q.state === 'untouched');
   out.push(`${count(b.untouched.count)} open PRs, ${pct(b.untouched.count, b.n)}% of the backlog, have had no human response. ` +
     `Their median wait is ${days(b.untouched.waitingDays.median)}` +
-    (untouched ? `, and ${count(untouched.count)} of them belong to sig/${untouched.sig}, the ${ORDINAL[untouched.rank] ?? `number ${untouched.rank}`} queue overall.` : '.'));
+    (untouched ? `, and ${count(untouched.count)} of them belong to sig/${untouched.sig}, the ${nth(untouched.rank)} queue overall.` : '.'));
 
-  out.push(`Waiting on the author is ${compareCounts(b.author.count, b.reviewer.count).common} waiting on a reviewer: ${count(b.author.count)} open PRs need a rebase, requested changes or a process label from their author, against ${count(b.reviewer.count)} waiting for review.`);
+  // Same grouping as the page's second finding: no response, waiting for lgtm, waiting for approval.
+  const reviewSide = b.untouched.count + b.reviewer.count + b.approver.count;
+  out.push(`${count(reviewSide)} of ${count(b.n)} open PRs (${pct(reviewSide, b.n)}%) wait on a reviewer or approver. ` +
+    `${count(b.author.count)} (${pct(b.author.count, b.n)}%) wait on their author for a rebase, requested changes or a process label, ` +
+    `${compareCounts(b.author.count, b.reviewer.count).than} the ${count(b.reviewer.count)} that have had a response but no lgtm yet.`);
 
   return out.join('\n\n');
 }
@@ -57,6 +62,7 @@ export function fillReadme(readme, findings) {
   const close = '<!-- /generated:findings -->';
   const start = readme.indexOf(open);
   const end = readme.indexOf(close);
+  if (readme.indexOf(open, start + 1) >= 0 || readme.indexOf(close, end + 1) >= 0) throw new Error('README.md has the findings markers more than once');
   if (start < 0 || end < start) throw new Error(`README.md is missing the ${open} … ${close} markers`);
   // Keep the README's own line endings: a Windows checkout may have CRLF.
   const eol = readme.includes('\r\n') ? '\r\n' : '\n';

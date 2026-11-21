@@ -113,3 +113,10 @@ test('the author-versus-reviewer fact never says "close to" when the counts are 
   const ratio = b.author.count / b.reviewer.count;
   assert.equal(/close to/.test(fact), ratio >= 0.8 && ratio <= 1.25, fact);
 });
+
+test('comparing zero counts gives a true answer', async () => {
+  const { compareCounts } = await import('../src/compare.js');
+  assert.equal(compareCounts(0, 0).than, 'close to');
+  assert.equal(compareCounts(5, 0).than, 'more than');
+  assert.equal(compareCounts(0, 5).than, 'fewer than');
+});

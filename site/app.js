@@ -43,13 +43,15 @@ const sigName = (g) => (g === 'cross-cutting' ? 'Cross-cutting (4+ SIGs)' : g ==
 const pct = (part, whole) => Math.round((part / whole) * 100);
 
 // ---- snapshot age (ADR 0011) ----
-// Whole days since the snapshot was fetched, or null when there's no clock: the
-// prerendered copy in index.html is drawn once, so it states only the date.
+// Calendar days (UTC, like the date beside it) since the snapshot was fetched, or
+// null when there's no clock: the prerendered copy in index.html is drawn once, so
+// it states only the date.
 const STALE_DAYS = 30;
 function snapshotAge(fetchedAt) {
   const now = typeof NOW_MS === 'undefined' ? Date.now() : NOW_MS;
   if (now === null) return null;
-  const days = Math.floor((now - Date.parse(fetchedAt)) / 86_400_000);
+  const day = (ms) => Math.floor(ms / 86_400_000); // whole UTC days since 1970
+  const days = day(now) - day(Date.parse(fetchedAt));
   return Number.isFinite(days) && days >= 0 ? days : null;
 }
 const ago = (d) => (d === 0 ? 'today' : d === 1 ? '1 day ago' : `${num(d)} days ago`);
@@ -567,7 +569,7 @@ function briefSection(brief, m) {
   // A brief cites the PRs and numbers of the snapshot it was written from, so
   // one written for another snapshot is never shown beside this one's numbers.
   if (brief.metricsFetchedAt !== m.fetchedAt) {
-    section.append(el('p', { class: 'lede' }, 'No brief for this snapshot yet: the last one was written for an earlier snapshot, so it isn’t shown. The numbers in this report are unaffected.'));
+    section.append(el('p', { class: 'lede' }, 'No brief for this snapshot yet: the last one was written for a different snapshot, so it isn’t shown. The numbers in this report are unaffected.'));
     return section;
   }
   const allEdits = brief.review?.edits ?? [];
