@@ -5,7 +5,7 @@ Shows where pull requests wait in a large engineering org, by team (SIG) and rev
 
 Live report: https://whosemoveisit.gurn3k.com
 
-![The live report: a pull request waits 4 days for review, then merges in under 2 hours, beside a chart of where a merged PR's time goes](docs/images/screenshot.png)
+![The live report's opening: the headline finding, the snapshot date, and a chart of where a merged PR's time goes](docs/images/screenshot.png)
 
 Kubernetes already publishes detailed PR-velocity charts through CNCF DevStats. This project answers a narrower question that DevStats spreads across several dashboards: right now, whose move is each open PR waiting on, and which team-and-stage queue holds the most waiting? It reads timelines directly from GitHub's API, ranks queues by PR-days of waiting, links every number to its PRs, and writes a short cited brief. It is a single snapshot, not a trend chart, and it doesn't measure reviewer capacity. [Existing tools](docs/research/existing-tools.md) compares it with DevStats and commercial products.
 
@@ -84,8 +84,10 @@ The owner refreshes the dashboard when they choose to (ADR 0009):
 1. `npm run snapshot` fetches PRs, recomputes the metrics, writes them into `site/index.html` and prints the brief's cost estimate.
 2. `npm run brief` writes the brief. It costs a fraction of a cent, and if it fails any check the snapshot ships without a brief.
 3. `npm run score:brief -- --sheet` writes a review sheet, and a person marks each bullet before publishing.
-4. `npm run prerender` writes the reviewed brief into `site/index.html`. `npm test` fails if this step is skipped.
-5. Commit `site/` and push. Vercel serves `site/` and redeploys on each push.
+4. `npm run prerender` writes the reviewed brief into `site/index.html` and the findings into this README. `npm test` fails if this step is skipped.
+5. `npm run cross-check -- <month> <month>` reruns the DevStats comparison on two whole months inside the merged window. Record the result in the [cross-check](docs/research/devstats-cross-check.md) and the paragraph above.
+6. Update the figures in `scripts/share-card.html` and render `site/share.png` (the command is in that file); `npm test` checks the page's meta tags against the headline.
+7. Commit `site/` and push. Vercel serves `site/` and redeploys on each push.
 
 The page ships with the full report as static HTML, so link scanners, search engines and readers without JavaScript see the findings. `site/app.js` then redraws it with the interactive evidence panels. The static copy is drawn by running `app.js` itself against a small DOM (`src/fake-dom.js`), so the two can't disagree.
 
