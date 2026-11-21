@@ -251,3 +251,37 @@ test('the README findings keep the README’s own line endings', () => {
   assert.ok(!/[^\r]\n/.test(out), 'every newline in a CRLF README stays CRLF');
   assert.equal(fillReadme(out, findings), out, 'filling twice changes nothing');
 });
+
+// ---- damaged data files fail closed ----
+test('a damaged brief shows no brief, and the rest of the report still draws', async () => {
+  const damaged = [
+    { ...brief, bullets: 'oops' },
+    { ...brief, bullets: [{ text: 'a bullet with no citations' }] },
+    { ...brief, bullets: [{ text: 'bad citation', prs: ['#1'] }] },
+    { ...brief, bullets: [{ text: '', prs: [1] }] },
+    { ...brief, generatedAt: 'not a date' },
+    { ...brief, review: { reviewedAt: '2026-11-21', edits: 'x' } },
+    [1, 2],
+    'hello',
+  ];
+  for (const b of damaged) {
+    const { main } = await renderSite({ metrics, brief: b });
+    assert.match(textOf(main.byId('brief')), /No brief for this snapshot\./, JSON.stringify(b).slice(0, 80));
+    assert.equal(textOf(main.all('h1')[0]), headline);
+  }
+});
+
+test('brief text is drawn as text, never as markup', async () => {
+  const b = { ...brief, bullets: [{ text: '<img src=x onerror=alert(1)>', prs: [1] }] };
+  const { main } = await renderSite({ metrics, brief: b });
+  assert.ok(!main.innerHTML.includes('<img src=x'));
+  assert.ok(textOf(main.byId('brief')).includes('<img src=x onerror=alert(1)>'));
+});
+
+test('a snapshot without a valid date draws no numbers', async () => {
+  for (const fetchedAt of ['not a date', undefined, 12]) {
+    const { main } = await renderSite({ metrics: { ...metrics, fetchedAt }, brief });
+    assert.equal(main.all('p', 'load-error').length, 1, String(fetchedAt));
+    assert.equal(main.all('h1').length, 0);
+  }
+});

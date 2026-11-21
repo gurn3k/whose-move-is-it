@@ -546,16 +546,28 @@ function figureTeams(m) {
   return fig;
 }
 
+/** True only for a brief the page can draw in full: a damaged file shows no brief, never half of one. */
+function wellFormedBrief(brief) {
+  const isDate = (v) => typeof v === 'string' && !Number.isNaN(Date.parse(v));
+  return !!brief && typeof brief === 'object' && !Array.isArray(brief) &&
+    typeof brief.model === 'string' && isDate(brief.generatedAt) &&
+    Array.isArray(brief.bullets) && brief.bullets.length > 0 &&
+    brief.bullets.every((b) => b && typeof b.text === 'string' && b.text.trim() !== '' &&
+      Array.isArray(b.prs) && b.prs.length > 0 && b.prs.every((n) => Number.isInteger(n) && n > 0)) &&
+    (brief.review == null || (typeof brief.review === 'object' && isDate(brief.review.reviewedAt) &&
+      (brief.review.edits == null || Array.isArray(brief.review.edits))));
+}
+
 function briefSection(brief, m) {
   const section = el('section', { class: 'part', id: 'brief', 'aria-labelledby': 'brief-h' }, el('h2', { id: 'brief-h' }, 'Risks brief'));
-  // A brief cites the PRs and numbers of the snapshot it was written from, so
-  // one written for another snapshot is never shown beside this one's numbers.
-  if (brief && brief.metricsFetchedAt !== m.fetchedAt) {
-    section.append(el('p', { class: 'lede' }, 'No brief for this snapshot yet: the last one was written for an earlier snapshot, so it isn’t shown. The numbers in this report are unaffected.'));
+  if (!wellFormedBrief(brief)) {
+    section.append(el('p', { class: 'lede' }, 'No brief for this snapshot. The numbers in this report are unaffected.'));
     return section;
   }
-  if (!brief || !Array.isArray(brief.bullets) || brief.bullets.length === 0) {
-    section.append(el('p', { class: 'lede' }, 'No brief for this snapshot. The numbers in this report are unaffected.'));
+  // A brief cites the PRs and numbers of the snapshot it was written from, so
+  // one written for another snapshot is never shown beside this one's numbers.
+  if (brief.metricsFetchedAt !== m.fetchedAt) {
+    section.append(el('p', { class: 'lede' }, 'No brief for this snapshot yet: the last one was written for an earlier snapshot, so it isn’t shown. The numbers in this report are unaffected.'));
     return section;
   }
   const allEdits = brief.review?.edits ?? [];
@@ -682,6 +694,8 @@ async function load(path) {
   let m;
   try {
     m = await load('data/metrics.json');
+    // The date is what makes a snapshot honest: without one, show nothing rather than undated numbers.
+    if (typeof m?.fetchedAt !== 'string' || Number.isNaN(Date.parse(m.fetchedAt))) throw new Error('snapshot has no date');
   } catch {
     main.replaceChildren(el('p', { class: 'load-error' }, 'The snapshot data couldn’t load. Serve the site folder over HTTP (npm run serve); opening index.html directly won’t work.'));
     return;
