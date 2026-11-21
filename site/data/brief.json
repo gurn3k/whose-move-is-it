@@ -5,34 +5,70 @@
   "costUsd": 0.001534,
   "bullets": [
     {
-      "text": "Most merged work progresses from review-ready to merged in a median 5.0 days, although 1 in 10 merged PRs took about 52 days or longer; this reflects the time in review and merge stages for merged PRs.",
+      "text": "Merged PRs took a median 5.0 days from ready for review to merge; 1 in 10 took about 52 days or longer.",
       "prs": [
         113883
       ]
     },
     {
-      "text": "A large review queue has 295 open PRs with no human response yet, with a median wait of 37 days, indicating many PRs are stuck at the initial triage or response stage.",
+      "text": "295 open PRs have had no human response yet, with a median wait of 37 days.",
       "prs": [
         137152
       ]
     },
     {
-      "text": "There are 303 open PRs waiting for a reviewer’s lgtm across the repo, with a median wait of 62 days, showing a prolonged reviewer queue for those changes.",
+      "text": "303 open PRs are waiting for a reviewer's lgtm, with a median wait of 62 days.",
       "prs": [
         105209
       ]
     },
     {
-      "text": "The sig/api-machinery team is a major contributor to the reviewer queue with 104 PRs waiting for a reviewer’s lgtm and a median wait of 66 days, reflecting team-level backlog in that review stage.",
+      "text": "sig/api-machinery has 104 PRs waiting for a reviewer's lgtm, with a median wait of 66 days.",
       "prs": [
         118378
       ]
     },
     {
-      "text": "More PRs are waiting on their author than waiting for a reviewer’s lgtm: 383 open PRs are waiting on authors with a median wait of 23 days, compared with 303 waiting for reviewer lgtm; this highlights author-side queues versus reviewer-side queues.",
+      "text": "More open PRs are waiting on their author (383, median wait 23 days) than for a reviewer's lgtm (303).",
       "prs": [
         105229
       ]
     }
-  ]
+  ],
+  "review": {
+    "reviewedAt": "2026-11-21",
+    "verdict": "Approved with edits: 2 corrected, 3 reworded",
+    "edits": [
+      {
+        "bullet": 1,
+        "before": "Most merged work progresses from review-ready to merged in a median 5.0 days, although 1 in 10 merged PRs took about 52 days or longer; this reflects the time in review and merge stages for merged PRs.",
+        "after": "Merged PRs took a median 5.0 days from ready for review to merge; 1 in 10 took about 52 days or longer.",
+        "reason": "Correction: 'most merged work' overstated a median, which describes half. Same facts and citations."
+      },
+      {
+        "bullet": 2,
+        "before": "A large review queue has 295 open PRs with no human response yet, with a median wait of 37 days, indicating many PRs are stuck at the initial triage or response stage.",
+        "after": "295 open PRs have had no human response yet, with a median wait of 37 days.",
+        "reason": "Correction: these PRs aren't in a review queue yet, and the data doesn't show they're stuck at triage. Same facts and citations."
+      },
+      {
+        "bullet": 3,
+        "before": "There are 303 open PRs waiting for a reviewer’s lgtm across the repo, with a median wait of 62 days, showing a prolonged reviewer queue for those changes.",
+        "after": "303 open PRs are waiting for a reviewer's lgtm, with a median wait of 62 days.",
+        "reason": "Tightened wording; same facts and citations."
+      },
+      {
+        "bullet": 4,
+        "before": "The sig/api-machinery team is a major contributor to the reviewer queue with 104 PRs waiting for a reviewer’s lgtm and a median wait of 66 days, reflecting team-level backlog in that review stage.",
+        "after": "sig/api-machinery has 104 PRs waiting for a reviewer's lgtm, with a median wait of 66 days.",
+        "reason": "Tightened wording; same facts and citations."
+      },
+      {
+        "bullet": 5,
+        "before": "More PRs are waiting on their author than waiting for a reviewer’s lgtm: 383 open PRs are waiting on authors with a median wait of 23 days, compared with 303 waiting for reviewer lgtm; this highlights author-side queues versus reviewer-side queues.",
+        "after": "More open PRs are waiting on their author (383, median wait 23 days) than for a reviewer's lgtm (303).",
+        "reason": "Tightened wording, dropping a vague closing clause; same facts and citations."
+      }
+    ]
+  }
 }
