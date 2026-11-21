@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { renderSite } from '../src/fake-dom.js';
 import { prerender } from '../src/prerender.js';
+import { readmeFindings, fillReadme } from '../src/readme.js';
 
 // Expected values are computed from the committed snapshot, the same files the
 // live page reads, so a refreshed snapshot keeps these tests meaningful.
@@ -167,4 +168,61 @@ test('index.html carries the report as static HTML, matching this snapshot', asy
   assert.ok(html.includes(`<h1>${headline}</h1>`));
   assert.doesNotMatch(html, /Loading the snapshot/);
   assert.doesNotMatch(html, / style="/, 'inline styles would break the CSP');
+});
+
+// ---- snapshot age (ADR 0011) ----
+const fetched = Date.parse(metrics.fetchedAt);
+const DAY = 86_400_000;
+const bylineAt = async (now) => {
+  const { main } = await renderSite({ metrics, brief, now });
+  return { byline: textOf(main.all('p', 'byline')[0]), stale: main.all('p', 'stale-note').map(textOf) };
+};
+
+test('the prerendered copy states the snapshot date with no age, since it has no clock', async () => {
+  const { byline, stale } = await bylineAt(null);
+  assert.doesNotMatch(byline, /ago|today/);
+  assert.deepEqual(stale, []);
+  assert.doesNotMatch(html, /days ago|stale-note/);
+});
+
+test('a fresh snapshot shows its age and no warning', async () => {
+  assert.match((await bylineAt(fetched + 2 * 60_000)).byline, /\(today\)/);
+  assert.match((await bylineAt(fetched + DAY + 1)).byline, /\(1 day ago\)/);
+  const at29 = await bylineAt(fetched + 29 * DAY + 1);
+  assert.match(at29.byline, /\(29 days ago\)/);
+  assert.deepEqual(at29.stale, []);
+});
+
+test('a snapshot 30 or more days old says so above the findings', async () => {
+  const at30 = await bylineAt(fetched + 30 * DAY + 1);
+  assert.match(at30.byline, /\(30 days ago\)/);
+  assert.equal(at30.stale.length, 1);
+  assert.match(at30.stale[0], /^This snapshot is 30 days old\. Open PRs may have moved since/);
+  assert.match((await bylineAt(fetched + 400 * DAY)).stale[0], /400 days old/);
+});
+
+test('a clock behind the snapshot shows no age rather than a negative one', async () => {
+  const { byline, stale } = await bylineAt(fetched - 5 * DAY);
+  assert.doesNotMatch(byline, /ago|today|-/);
+  assert.deepEqual(stale, []);
+});
+
+// ---- README figures come from the snapshot ----
+test('the README findings match this snapshot', async () => {
+  const readme = readFileSync('README.md', 'utf8');
+  // Run npm run prerender when this fails.
+  assert.equal(readme, fillReadme(readme, readmeFindings(metrics, headline)), 'README.md findings are stale: run npm run prerender');
+  const block = readme.slice(readme.indexOf('<!-- generated:findings -->'), readme.indexOf('<!-- /generated:findings -->'));
+  for (const figure of [count(o.merged.n), count(o.backlog.n), count(o.backlog.untouched.count), count(metrics.bottlenecks[0].prDays), days(o.merged.review.median)]) {
+    assert.ok(block.includes(figure), `README findings should state ${figure}`);
+  }
+  assert.ok(block.includes(`snapshot of ${metrics.fetchedAt.slice(0, 10)}`));
+});
+
+test('no snapshot figure is typed by hand outside the generated README section', () => {
+  const readme = readFileSync('README.md', 'utf8');
+  const outside = readme.slice(0, readme.indexOf('<!-- generated:findings -->')) + readme.slice(readme.indexOf('<!-- /generated:findings -->'));
+  for (const figure of [count(o.merged.n), count(o.backlog.n), days(o.merged.review.median), days(o.merged.cycle.median), count(metrics.bottlenecks[0].prDays)]) {
+    assert.ok(!outside.includes(figure), `${figure} appears outside the generated findings; move it inside or drop it`);
+  }
 });

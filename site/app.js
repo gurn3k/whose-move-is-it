@@ -42,6 +42,18 @@ const shortDate = (iso) => new Date(iso).toLocaleDateString('en-GB', { day: 'num
 const sigName = (g) => (g === 'cross-cutting' ? 'Cross-cutting (4+ SIGs)' : g === 'no-sig' ? 'No SIG label' : `sig/${g}`);
 const pct = (part, whole) => Math.round((part / whole) * 100);
 
+// ---- snapshot age (ADR 0011) ----
+// Whole days since the snapshot was fetched, or null when there's no clock: the
+// prerendered copy in index.html is drawn once, so it states only the date.
+const STALE_DAYS = 30;
+function snapshotAge(fetchedAt) {
+  const now = typeof NOW_MS === 'undefined' ? Date.now() : NOW_MS;
+  if (now === null) return null;
+  const days = Math.floor((now - Date.parse(fetchedAt)) / 86_400_000);
+  return Number.isFinite(days) && days >= 0 ? days : null;
+}
+const ago = (d) => (d === 0 ? 'today' : d === 1 ? '1 day ago' : `${num(d)} days ago`);
+
 // ---- DOM helper: text always goes in as text, never as HTML ----
 function el(tag, attrs = {}, ...children) {
   const node = document.createElement(tag);
@@ -266,6 +278,7 @@ const howMeasured = (summary, ...body) => el('details', { class: 'how' }, el('su
 function opening(m, f) {
   const o = m.overall;
   const share = reviewShare(m);
+  const age = snapshotAge(m.fetchedAt);
   const container = el('div', { class: 'opening' });
   const anchor = () => container;
 
@@ -301,9 +314,11 @@ function opening(m, f) {
     el('div', {},
       el('h1', {}, headline(o)),
       el('p', { class: 'byline' },
-        'By Gurnek Khaira · Snapshot of ', longDate(m.fetchedAt), ' · ',
+        'By Gurnek Khaira · Snapshot of ', longDate(m.fetchedAt), age === null ? '' : ` (${ago(age)})`, ' · ',
         `${num(o.merged.n)} merged and ${num(o.backlog.n)} open pull requests in `,
         el('a', { href: 'https://github.com/kubernetes/kubernetes', target: '_blank', rel: 'noopener' }, m.repo)),
+      age !== null && age >= STALE_DAYS && el('p', { class: 'stale-note' },
+        `This snapshot is ${num(age)} days old. Open PRs may have moved since, so read the waits and queues as they stood on ${longDate(m.fetchedAt)}.`),
       el('p', { class: 'summary' }, tailSentence(o).trim()),
       el('p', { class: 'plain' },
         'Software teams make changes through “pull requests” (PRs), proposals that a colleague must review and approve before they go in. ',
