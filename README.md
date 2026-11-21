@@ -1,7 +1,7 @@
 # Whose Move Is It
-[![Tests](https://github.com/gurn3k/delivery-bottleneck-analyzer/actions/workflows/tests.yml/badge.svg)](https://github.com/gurn3k/delivery-bottleneck-analyzer/actions/workflows/tests.yml)
+[![Tests](https://github.com/gurn3k/whose-move-is-it/actions/workflows/tests.yml/badge.svg)](https://github.com/gurn3k/whose-move-is-it/actions/workflows/tests.yml)
 
-Shows where pull requests wait in a large engineering org, by team (SIG) and review stage. Version 1 is a snapshot of `kubernetes/kubernetes`, built from public GitHub data. (Earlier called Delivery Bottleneck Analyzer; the repository keeps that name so existing links work.)
+Shows where pull requests wait in a large engineering org, by team (SIG) and review stage. Version 1 is a snapshot of `kubernetes/kubernetes`, built from public GitHub data. (Earlier called Delivery Bottleneck Analyzer.)
 
 Live report: https://whosemoveisit.gurn3k.com
 

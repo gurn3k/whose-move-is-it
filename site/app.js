@@ -2,7 +2,7 @@
 // every number that has PRs behind it opens them in an inline evidence panel.
 
 // The public repository. Confirm at launch; the page links here for source and method.
-const REPO_URL = 'https://github.com/gurn3k/delivery-bottleneck-analyzer';
+const REPO_URL = 'https://github.com/gurn3k/whose-move-is-it';
 const MAKER_URL = 'https://www.gurn3k.com';
 const PR_URL = (n) => `https://github.com/kubernetes/kubernetes/pull/${n}`;
 const NA = '—';
